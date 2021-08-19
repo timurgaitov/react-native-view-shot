@@ -120,9 +120,14 @@ RCT_EXPORT_METHOD(captureRef:(nonnull NSNumber *)target
     }
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     if (flipX) {
-      image = [UIImage imageWithCGImage:image.CGImage
-        scale:image.scale
-        orientation:UIImageOrientationUpMirrored];
+      CGContextRef context = UIGraphicsGetCurrentContext();
+      CGFloat x = size.width / 2;
+      CGFloat y = size.height / 2;
+      CGContextTranslateCTM(context, x, y);
+      CGContextScaleCTM(context, -1, -1);
+      CGContextTranslateCTM(context, -x, -y);
+      CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), image.CGImage);
+      image = UIGraphicsGetImageFromCurrentImageContext();
     }
     UIGraphicsEndImageContext();
 
