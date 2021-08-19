@@ -125,6 +125,7 @@ public class ViewShot implements UIBlock {
     private final String result;
     private final Promise promise;
     private final Boolean snapshotContentContainer;
+    private final Boolean flipX;
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final ReactApplicationContext reactContext;
     private final Activity currentActivity;
@@ -142,6 +143,7 @@ public class ViewShot implements UIBlock {
             final File output,
             @Results final String result,
             final Boolean snapshotContentContainer,
+            final Boolean flipX,
             final ReactApplicationContext reactContext,
             final Activity currentActivity,
             final Promise promise) {
@@ -154,6 +156,7 @@ public class ViewShot implements UIBlock {
         this.output = output;
         this.result = result;
         this.snapshotContentContainer = snapshotContentContainer;
+        this.flipX = flipX;
         this.reactContext = reactContext;
         this.currentActivity = currentActivity;
         this.promise = promise;
@@ -373,6 +376,13 @@ public class ViewShot implements UIBlock {
             recycleBitmap(childBitmapBuffer);
         }
 
+        if (flipX) {
+            final Bitmap flippedBitmap = createXFlippedBitmap(bitmap);
+            recycleBitmap(bitmap);
+
+            bitmap = flippedBitmap;
+        }
+
         if (width != null && height != null && (width != w || height != h)) {
             final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
             recycleBitmap(bitmap);
@@ -395,6 +405,12 @@ public class ViewShot implements UIBlock {
         recycleBitmap(bitmap);
 
         return resolution; // return image width and height
+    }
+
+    private static Bitmap createXFlippedBitmap(Bitmap source) {
+        Matrix matrix = new Matrix();
+        matrix.postScale(-1, 1, source.getWidth() / 2f, source.getHeight() / 2f);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
     /**

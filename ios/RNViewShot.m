@@ -69,6 +69,7 @@ RCT_EXPORT_METHOD(captureRef:(nonnull NSNumber *)target
     NSString *result = [RCTConvert NSString:options[@"result"]];
     BOOL renderInContext = [RCTConvert BOOL:options[@"useRenderInContext"]];
     BOOL snapshotContentContainer = [RCTConvert BOOL:options[@"snapshotContentContainer"]];
+    BOOL flipX = [RCTConvert BOOL:options[@"flipX"]];
 
     // Capture image
     BOOL success;
@@ -115,9 +116,14 @@ RCT_EXPORT_METHOD(captureRef:(nonnull NSNumber *)target
     }
     else {
       // this doesn't work for large views and reports incorrect success even though the image is blank
-      success = [rendered drawViewHierarchyInRect:(CGRect){CGPointZero, size} afterScreenUpdates:YES];
+    success = [rendered drawViewHierarchyInRect:(CGRect){CGPointZero, size} afterScreenUpdates:YES];
     }
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    if (flipX) {
+      image = [UIImage imageWithCGImage:image.CGImage
+        scale:image.scale
+        orientation:UIImageOrientationUpMirrored];
+    }
     UIGraphicsEndImageContext();
 
     if (snapshotContentContainer) {

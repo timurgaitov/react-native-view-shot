@@ -44,6 +44,8 @@ declare module 'react-native-view-shot' {
          * container height.
          */
         snapshotContentContainer?: boolean;
+
+        flipX?: boolean;
     }
 
     export interface ViewShotProperties {
