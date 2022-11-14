@@ -28,71 +28,78 @@ react-native link react-native-view-shot
 npx pod-install
 ```
 
-## Recommended High Level API
+## High Level API
 
 ```js
 import ViewShot from "react-native-view-shot";
 
-class ExampleCaptureOnMountManually extends Component {
-  componentDidMount () {
-    this.refs.viewShot.capture().then(uri => {
+function ExampleCaptureOnMountManually {
+  const ref = useRef();
+
+  useEffect(() => {
+    // on mount
+    ref.current.capture().then(uri => {
       console.log("do something with ", uri);
     });
-  }
-  render() {
-    return (
-      <ViewShot ref="viewShot" options={{ format: "jpg", quality: 0.9 }}>
-        <Text>...Something to rasterize...</Text>
-      </ViewShot>
-    );
-  }
+  }, []);
+
+  return (
+    <ViewShot ref={ref} options={{ fileName: "Your-File-Name", format: "jpg", quality: 0.9 }}>
+      <Text>...Something to rasterize...</Text>
+    </ViewShot>
+  );
 }
 
 // alternative
-class ExampleCaptureOnMountSimpler extends Component {
-  onCapture = uri => {
+function ExampleCaptureOnMountSimpler {
+  const ref = useRef();
+
+  const onCapture = useCallback(uri => {
     console.log("do something with ", uri);
-  }
-  render() {
-    return (
-      <ViewShot onCapture={this.onCapture} captureMode="mount">
-        <Text>...Something to rasterize...</Text>
-      </ViewShot>
-    );
-  }
+  }, []);
+
+  return (
+    <ViewShot onCapture={onCapture} captureMode="mount">
+      <Text>...Something to rasterize...</Text>
+    </ViewShot>
+  );
 }
 
 // waiting an image
-class ExampleWaitingCapture extends Component {
-  onImageLoad = () => {
-    this.refs.viewShot.capture().then(uri => {
+
+function ExampleWaitingCapture {
+  const ref = useRef();
+
+  const onImageLoad = useCallback(() => {
+    ref.current.capture().then(uri => {
       console.log("do something with ", uri);
     })
-  };
-  render() {
-    return (
-      <ViewShot ref="viewShot">
-        <Text>...Something to rasterize...</Text>
-        <Image ... onLoad={this.onImageLoad} />
-      </ViewShot>
-    );
-  }
+  }, []);
+
+  return (
+    <ViewShot ref={ref}>
+      <Text>...Something to rasterize...</Text>
+      <Image ... onLoad={onImageLoad} />
+    </ViewShot>
+  );
 }
 
 // capture ScrollView content
-class ExampleCaptureScrollViewContent extends Component {
-  onCapture = uri => {
+// NB: you may need to go the "imperative way" to use snapshotContentContainer with the scrollview ref instead
+function ExampleCaptureOnMountSimpler {
+  const ref = useRef();
+
+  const onCapture = useCallback(uri => {
     console.log("do something with ", uri);
-  }
-  render() {
-    return (
-      <ScrollView>
-        <ViewShot onCapture={this.onCapture} captureMode="mount">
-          <Text>...The Scroll View Content Goes Here...</Text>
-        </ViewShot>
-      </ScrollView>
-    );
-  }
+  }, []);
+
+  return (
+    <ScrollView>
+      <ViewShot onCapture={onCapture} captureMode="mount">
+        <Text>...The Scroll View Content Goes Here...</Text>
+      </ViewShot>
+    </ScrollView>
+  );
 }
 ```
 
@@ -115,10 +122,10 @@ import { captureRef } from "react-native-view-shot";
 
 captureRef(viewRef, {
   format: "jpg",
-  quality: 0.8
+  quality: 0.8,
 }).then(
-  uri => console.log("Image saved to", uri),
-  error => console.error("Oops, snapshot failed", error)
+  (uri) => console.log("Image saved to", uri),
+  (error) => console.error("Oops, snapshot failed", error)
 );
 ```
 
@@ -126,6 +133,7 @@ Returns a Promise of the image URI.
 
 - **`view`** is a reference to a React Native component.
 - **`options`** may include:
+  - **`fileName`** _(string)_: (Android only) the file name of the file. Must be at least 3 characters long.
   - **`width`** / **`height`** _(number)_: the width and height of the final image (resized from the View bound. don't provide it if you want the original pixel size).
   - **`format`** _(string)_: either `png` or `jpg` or `webm` (Android). Defaults to `png`.
   - **`quality`** _(number)_: the quality. 0.0 - 1.0 (default). (only available on lossy formats like jpg)
@@ -134,6 +142,7 @@ Returns a Promise of the image URI.
     - `"base64"`: encode as base64 and returns the raw string. Use only with small images as this may result of lags (the string is sent over the bridge). _N.B. This is not a data uri, use `data-uri` instead_.
     - `"data-uri"`: same as `base64` but also includes the [Data URI scheme](https://en.wikipedia.org/wiki/Data_URI_scheme) header.
   - **`snapshotContentContainer`** _(bool)_: if true and when view is a ScrollView, the "content container" height will be evaluated instead of the container height.
+  - [iOS] **`useRenderInContext`** _(bool)_: change the iOS snapshot strategy to use method `renderInContext` instead of `drawViewHierarchyInRect` which may help for some use cases.
 
 ## `releaseCapture(uri)`
 
@@ -148,10 +157,10 @@ import { captureScreen } from "react-native-view-shot";
 
 captureScreen({
   format: "jpg",
-  quality: 0.8
+  quality: 0.8,
 }).then(
-  uri => console.log("Image saved to", uri),
-  error => console.error("Oops, snapshot failed", error)
+  (uri) => console.log("Image saved to", uri),
+  (error) => console.error("Oops, snapshot failed", error)
 );
 ```
 
@@ -234,7 +243,7 @@ const Buffer = require("buffer").Buffer;
 const format = Platform.OS === "android" ? "raw" : "png";
 const result = Platform.OS === "android" ? "zip-base64" : "base64";
 
-captureRef(this.ref, { result, format }).then(data => {
+captureRef(this.ref, { result, format }).then((data) => {
   // expected pattern 'width:height|', example: '1080:1731|'
   const resolution = /^(\d+):(\d+)\|/g.exec(data);
   const width = (resolution || ["", 0, 0])[1];
@@ -271,7 +280,7 @@ Hint: use `process.fork()` approach for converting raw data into PNGs.
 
 ### Saving to a file?
 
-- If you want to save the snapshotted image result to the CameraRoll, just use https://facebook.github.io/react-native/docs/cameraroll.html#savetocameraroll
+- If you want to save the snapshotted image result to the CameraRoll, just use https://github.com/react-native-cameraroll/react-native-cameraroll
 - If you want to save it to an arbitrary file path, use something like https://github.com/itinance/react-native-fs
 - For any more advanced needs, you can write your own (or find another) native module that would solve your use-case.
 
@@ -302,6 +311,18 @@ Alternatively, you can use the `ViewShot` component that will wait the first `on
 ### Snapshotted image does not match my width and height but is twice/3-times bigger
 
 This is because the snapshot image result is in real pixel size where the width/height defined in a React Native style are defined in "point" unit. You might want to set width and height option to force a resize. (might affect image quality)
+
+### on Android, capture GL Views
+
+A prop may be necessary to properly capture GL Surface View in the view tree:
+
+```js
+/**
+  * if true and when view is a SurfaceView or have it in the view tree, view will be captured.
+  * False by default, because it can have signoficant performance impact
+  */
+handleGLSurfaceViewOnAndroid?: boolean;
+```
 
 ---
 

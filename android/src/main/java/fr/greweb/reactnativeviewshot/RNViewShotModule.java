@@ -81,16 +81,18 @@ public class RNViewShotModule extends ReactContextBaseJavaModule {
                 : Formats.PNG;
 
         final double quality = options.getDouble("quality");
-        final Integer scaleWidth = options.hasKey("width") ? (int) (dm.density * options.getDouble("width")) : null;
-        final Integer scaleHeight = options.hasKey("height") ? (int) (dm.density * options.getDouble("height")) : null;
+        final Integer scaleWidth = options.hasKey("width") ? options.getInt("width") : null;
+        final Integer scaleHeight = options.hasKey("height") ? options.getInt("height") : null;
         final String resultStreamFormat = options.getString("result");
+        final String fileName = options.hasKey("fileName") ? options.getString("fileName") : null;
         final Boolean snapshotContentContainer = options.getBoolean("snapshotContentContainer");
         final Boolean flipX = options.hasKey("flipX") && options.getBoolean("flipX");
+        final boolean handleGLSurfaceView = options.hasKey("handleGLSurfaceViewOnAndroid") && options.getBoolean("handleGLSurfaceViewOnAndroid");
 
         try {
             File outputFile = null;
             if (Results.TEMP_FILE.equals(resultStreamFormat)) {
-                outputFile = createTempFile(getReactApplicationContext(), extension);
+                outputFile = createTempFile(getReactApplicationContext(), extension, fileName);
             }
 
             final Activity activity = getCurrentActivity();
@@ -99,7 +101,7 @@ public class RNViewShotModule extends ReactContextBaseJavaModule {
             uiManager.addUIBlock(new ViewShot(
                     tag, extension, imageFormat, quality,
                     scaleWidth, scaleHeight, outputFile, resultStreamFormat,
-                    snapshotContentContainer, flipX, reactContext, activity, promise)
+                    snapshotContentContainer, flipX, reactContext, activity, handleGLSurfaceView, promise)
             );
         } catch (final Throwable ex) {
             Log.e(RNVIEW_SHOT, "Failed to snapshot view tag " + tag, ex);
@@ -164,7 +166,7 @@ public class RNViewShotModule extends ReactContextBaseJavaModule {
      * whichever is available and has more free space.
      */
     @NonNull
-    private File createTempFile(@NonNull final Context context, @NonNull final String ext) throws IOException {
+    private File createTempFile(@NonNull final Context context, @NonNull final String ext, String fileName) throws IOException {
         final File externalCacheDir = context.getExternalCacheDir();
         final File internalCacheDir = context.getCacheDir();
         final File cacheDir;
@@ -183,6 +185,9 @@ public class RNViewShotModule extends ReactContextBaseJavaModule {
         }
 
         final String suffix = "." + ext;
+        if (fileName != null) {
+            return File.createTempFile(fileName, suffix, cacheDir);
+        }
         return File.createTempFile(TEMP_FILE_PREFIX, suffix, cacheDir);
     }
 }
